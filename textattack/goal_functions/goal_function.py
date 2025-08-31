@@ -161,10 +161,10 @@ class GoalFunction(ReprMixin, ABC):
         inputs = [at.tokenizer_input for at in attacked_text_list]
         outputs = []
         i = 0
+        
         while i < len(inputs):
             batch = inputs[i : i + self.batch_size]
             batch_preds = self.model(batch)
-
             # Some seq-to-seq models will return a single string as a prediction
             # for a single-string list. Wrap these in a list.
             if isinstance(batch_preds, str):
@@ -183,16 +183,17 @@ class GoalFunction(ReprMixin, ABC):
                 outputs.append(batch_preds)
             i += self.batch_size
 
-        if isinstance(outputs[0], torch.Tensor):
-            outputs = torch.cat(outputs, dim=0)
-        elif isinstance(outputs[0], np.ndarray):
-            outputs = np.concatenate(outputs).ravel()
+        return self._process_model_outputs(attacked_text_list, outputs) # we do not convert to np.array here, because the outputs can be lists of different lengths
+        # if isinstance(outputs[0], torch.Tensor):
+        #     outputs = torch.cat(outputs, dim=0)
+        # elif isinstance(outputs[0], np.ndarray):
+        #     outputs = np.concatenate(outputs).ravel()
 
-        assert len(inputs) == len(
-            outputs
-        ), f"Got {len(outputs)} outputs for {len(inputs)} inputs"
+        # assert len(inputs) == len(
+        #     outputs
+        # ), f"Got {len(outputs)} outputs for {len(inputs)} inputs"
 
-        return self._process_model_outputs(attacked_text_list, outputs)
+        # return self._process_model_outputs(attacked_text_list, outputs)
 
     def _call_model(self, attacked_text_list):
         """Gets predictions for a list of ``AttackedText`` objects.
